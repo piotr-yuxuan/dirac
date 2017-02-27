@@ -151,7 +151,7 @@ SDK.DebuggerModel = class extends SDK.SDKModel {
   }
 
   asyncStackTracesStateChanged() {
-    const maxAsyncStackChainDepth = 8;
+    const maxAsyncStackChainDepth = 256;
     var enabled = Common.moduleSetting('enableAsyncStackTraces').get() && this._debuggerEnabled;
     this._agent.setAsyncCallStackDepth(enabled ? maxAsyncStackChainDepth : 0);
   }

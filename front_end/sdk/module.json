@@ -3,7 +3,8 @@
         "common",
         "host",
         "platform",
-        "protocol"
+        "protocol",
+        "dirac"
     ],
     "extensions": [
         {
@@ -94,7 +95,7 @@
             "title": "Enable custom formatters",
             "settingName": "customFormatters",
             "settingType": "boolean",
-            "defaultValue": false
+            "defaultValue": true
         }
     ],
     "scripts": [
@@ -140,6 +141,7 @@
         "PaintProfiler.js",
         "HeapProfilerModel.js",
         "../SupportedCSSProperties.js",
+        "SupportedCSSPropertiesExtensionMode.js",
         "FilmStripModel.js"
     ],
     "skip_compilation": [

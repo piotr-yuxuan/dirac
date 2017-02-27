@@ -69,9 +69,10 @@ def to_platform_path_exact(filepath):
 
 scripts_path = path.dirname(path.abspath(__file__))
 devtools_path = path.dirname(scripts_path)
-inspector_path = path.join(path.dirname(devtools_path), 'core', 'inspector')
-# TODO(dgozman): move these checks to v8.
-v8_inspector_path = path.normpath(path.join(path.dirname(devtools_path), os.pardir, os.pardir, os.pardir, 'v8', 'src', 'inspector'))
+chromium_path = path.join(devtools_path,  os.pardir, os.pardir, os.pardir, os.pardir, 'chromium-mirror')
+webkit_path = path.join(chromium_path, 'third_party', 'WebKit', 'Source')
+inspector_path = path.join(webkit_path, 'core', 'inspector')
+v8_inspector_path = path.normpath(path.join(chromium_path, 'v8', 'src', 'inspector'))
 devtools_frontend_path = path.join(devtools_path, 'front_end')
 global_externs_file = to_platform_path(path.join(devtools_frontend_path, 'externs.js'))
 protocol_externs_file = path.join(devtools_frontend_path, 'protocol_externs.js')
@@ -106,14 +107,18 @@ def error_excepthook(exctype, value, traceback):
 
 sys.excepthook = error_excepthook
 
-application_descriptors = [
-    'inspector.json',
-    'toolbox.json',
-    'unit_test_runner.json',
-    'formatter_worker.json',
-    'heap_snapshot_worker.json',
-    'utility_shared_worker.json',
-]
+# <------- cut here
+# darwin: I have deliberately touched these descriptors so I bump into conflicts when anyone touches this
+# => we need to update our release script in scripts/release.sh
+application_descriptors = [ #
+    'inspector.json', #
+    'toolbox.json', #
+    'unit_test_runner.json', #
+    'formatter_worker.json', #
+    'heap_snapshot_worker.json', #
+    'utility_shared_worker.json', #
+] #
+# <------- cut here
 
 skipped_namespaces = {
     'Console',  # Closure uses Console as a namespace item so we cannot override it right now.
@@ -320,6 +325,12 @@ def generate_namespace_externs(modules_by_name):
     namespace_externs_path = to_platform_path(namespace_externs_file.name)
     return namespace_externs_path
 
+def generate_namespace_externs_to_file(path):
+    loader = modular_build.DescriptorLoader(devtools_frontend_path)
+    descriptors = loader.load_applications(application_descriptors)
+    modules_by_name = descriptors.modules
+    tmp_namespace_externs_path = generate_namespace_externs(modules_by_name)
+    os.rename(tmp_namespace_externs_path, path)
 
 def main():
     errors_found = False

@@ -15,6 +15,8 @@
         { "name": "persistence", "type": "autostart" },
         { "name": "extensions", "type": "autostart" },
         { "name": "services", "type": "autostart" },
+        { "name": "dirac", "type": "autostart" },
+        { "name": "dirac_lazy" },
         { "name": "elements", "condition": "!v8only" },
         { "name": "network", "condition": "!v8only" },
         { "name": "network_group_lookup", "condition": "!v8only", "type": "remote" },

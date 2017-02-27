@@ -42,6 +42,14 @@ Sass.ASTSourceMap = class {
 
   /**
    * @override
+   * @return {?SDK.SourceMapV3}
+   */
+  payload() {
+    return null;
+  }
+
+    /**
+   * @override
    * @return {!Array<string>}
    */
   sourceURLs() {

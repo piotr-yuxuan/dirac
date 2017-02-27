@@ -102,6 +102,11 @@ SDK.SourceMap.prototype = {
   url() {},
 
   /**
+   * @return {?SDK.SourceMapV3}
+   */
+  payload: function() {},
+
+  /**
    * @return {!Array<string>}
    */
   sourceURLs() {},
@@ -189,6 +194,7 @@ SDK.TextSourceMap = class {
         SDK.TextSourceMap._base64Map[base64Digits.charAt(i)] = i;
     }
 
+    this._payload = payload;
     this._json = payload;
     this._compiledURL = compiledURL;
     this._sourceMappingURL = sourceMappingURL;
@@ -254,6 +260,14 @@ SDK.TextSourceMap = class {
 
   /**
    * @override
+   * @return {?SDK.SourceMapV3}
+   */
+  payload() {
+    return this._payload;
+  }
+
+  /**
+   * @override
    * @return {!Array.<string>}
    */
   sourceURLs() {
@@ -309,26 +323,27 @@ SDK.TextSourceMap = class {
    * @return {?SDK.SourceMapEntry}
    */
   findEntry(lineNumber, columnNumber) {
-    var first = 0;
-    var mappings = this.mappings();
-    var count = mappings.length;
-    while (count > 1) {
-      var step = count >> 1;
-      var middle = first + step;
-      var mapping = mappings[middle];
-      if (lineNumber < mapping.lineNumber ||
-          (lineNumber === mapping.lineNumber && columnNumber < mapping.columnNumber)) {
-        count = step;
+    const mappings = this.mappings();
+    if (mappings.length <= 0) {
+      return null;
+    }
+    let first = 0;
+    let last = mappings.length - 1;
+    while (first < last) {
+      const middle = first + Math.floor((last + 1 - first) / 2);
+      const entry = mappings[middle];
+      if (lineNumber < entry.lineNumber || (lineNumber === entry.lineNumber && columnNumber < entry.columnNumber)) {
+        last = middle - 1;
       } else {
         first = middle;
-        count -= step;
       }
     }
-    var entry = mappings[first];
-    if (!first && entry &&
-        (lineNumber < entry.lineNumber || (lineNumber === entry.lineNumber && columnNumber < entry.columnNumber)))
+    const entry = mappings[first];
+    if (entry && entry.lineNumber === lineNumber && entry.columnNumber <= columnNumber) {
+      return entry;
+    } else {
       return null;
-    return entry;
+    }
   }
 
   /**
@@ -481,6 +496,23 @@ SDK.TextSourceMap = class {
       this._mappings.push(new SDK.SourceMapEntry(
           lineNumber, columnNumber, sourceURL, sourceLineNumber, sourceColumnNumber, names[nameIndex]));
     }
+
+    // we have to sort the mappings for findEntry
+    // some source maps don't have monotonic mappings,
+    // _decodeVLQ might return negative values when updating columnNumber
+    // AFAIK, spec here does not disallow it:
+    //   https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit
+    this._mappings.sort((a, b) => {
+      const al = a.lineNumber;
+      const bl = b.lineNumber;
+      const ac = a.columnNumber;
+      const bc = b.columnNumber;
+      if (al < bl || (al === bl && ac < bc)) {
+        return -1;
+      } else {
+        return 1;
+      }
+    });
   }
 
   /**
